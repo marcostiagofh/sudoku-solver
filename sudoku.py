@@ -1,6 +1,82 @@
 from datetime import datetime
 
+def verificar_candidatos_eliminar(b):
+	print('chamada verificar_candidatos_eliminar(',b,')')
+	global nao_preenchidos_bloco
+	global candidatos_celula
+	global sudoku
+	global freq_candidato_bloco
+
+	l1,c1 = [0,0]
+	l2,c2 = [0,0]
+	tipo_adj = 0 #1 p horizontal, 2 p vertical
+	
+	n = 0
+	n_end = len(nao_preenchidos_bloco[b])
+	while n < n_end:
+		num = nao_preenchidos_bloco[b][n]
+		l1,c1 = [0,0]
+		l2,c2 = [0,0]
+		tipo_adj = 0
+		l = int((b-1)/3) * 3  + 1
+		l_end = l + 2
+		while l <= l_end:
+			c = ((b-1)%3) * 3 + 1
+			c_end = c + 2
+			while c <= c_end:
+				if sudoku[l][c] == 0 and num in candidatos_celula[l][c]:
+					if tipo_adj != 0:
+							if tipo_adj == 1 and l == l1:
+									cn = 1
+									cn_end = ((b-1)%3) * 3 + 1
+									while cn < cn_end:
+											if sudoku[l][cn] == 0 and num in candidatos_celula[l][cn]:
+													candidatos_celula[l][cn].remove(num) 
+													bn = int((l-1)/3) * 3 + int((cn-1)/3) + 1
+													freq_candidato_bloco[bn][num] -= 1
+											cn += 1
+									cn = ((b-1)%3) * 3 + 1 + 3
+									cn_end = 9
+									while cn < cn_end:
+											if sudoku[l][cn] == 0 and num in candidatos_celula[l][cn]:
+													candidatos_celula[l][cn].remove(num) 
+													bn = int((l-1)/3) * 3 + int((cn-1)/3) + 1
+													freq_candidato_bloco[bn][num] -= 1
+											cn += 1
+							elif tipo_adj == 2 and c == c1:
+									ln = 1
+									ln_end = int((b-1)/3) * 3  + 1
+									while ln < ln_end:
+											if sudoku[ln][c] == 0 and num in candidatos_celula[ln][c]:
+													candidatos_celula[ln][c].remove(num) 
+													bn = int((ln-1)/3) * 3 + int((c-1)/3) + 1
+													freq_candidato_bloco[bn][num] -= 1
+											ln += 1
+									ln = int((b-1)/3) * 3  + 1 + 3
+									ln_end = 9
+									while ln < ln_end:
+											if sudoku[ln][c] == 0 and num in candidatos_celula[ln][c]:
+													candidatos_celula[ln][c].remove(num) 
+													bn = int((ln-1)/3) * 3 + int((c-1)/3) + 1
+													freq_candidato_bloco[bn][num] -= 1
+											ln += 1
+							else:
+								l,c = [l_end,c_end]
+								break 
+					elif l1 != 0:
+							l2,c2 = [l,c]
+							if l2 == l1:
+									tipo_adj = 1
+							if c2 == c1:
+									tipo_adj = 2
+					else:
+							l1,c1 = [l,c]
+				c += 1
+			l += 1
+		n += 1
+
 def fill_sudoku_cell(b,l,c,num):
+	print('chamada fill_sudoku_cell(',b,',',l,',',c,',',num,')')
 	global sudoku
 	global pendentes
 	global passos
@@ -15,6 +91,7 @@ def fill_sudoku_cell(b,l,c,num):
 	global preenchidos_bloco
 
 	sudoku[l][c] = num
+	#print_sudoku(sudoku)
 	print('sudoku[',l,'][',c,'] = ',num)
 	pendentes -= 1
 	if pendentes == 0:
@@ -23,17 +100,87 @@ def fill_sudoku_cell(b,l,c,num):
 		final_program = datetime.now()
 		print(f"Time program:{final_program-initial_program}")
 		exit()
-	freq_candidato_bloco[b][num] = 0
+	
 	linha[num][l] = 1
 	coluna[num][c] = 1
 	bloco[num][b] = 1
 	nao_preenchidos_bloco[b].remove(num)
-	candidatos_celula[l][c].remove(num)
+	n1 = 0
+	n1_end = len(candidatos_celula[l][c])
+	while n1 < n1_end:
+		num1 = candidatos_celula[l][c][n1]
+		freq_candidato_bloco[b][num1] -= 1
+		n1 += 1
+	freq_candidato_bloco[b][num] = 0
+	candidatos_celula[l][c] = []
 	preenchidos_linha[l] += 1
 	preenchidos_coluna[c] += 1
 	preenchidos_bloco[b] += 1
 
+	l1 = int((b-1)/3) * 3  + 1
+	l1_end = l1 + 2
+	while l1 <= l1_end:
+		c1 = ((b-1)%3) * 3 + 1
+		c1_end = c1 + 2
+		while c1 <= c1_end:
+			if sudoku[l1][c1] == 0 and num in candidatos_celula[l1][c1]:
+				candidatos_celula[l1][c1].remove(num)
+			c1 += 1
+		l1 +=1
+
+	c1 = 1
+	while c1 <= 9:
+		if sudoku[l][c1] == 0 and num in candidatos_celula[l][c1]:
+			b1 = int((l-1)/3) * 3 + int((c1-1)/3) + 1
+			freq_candidato_bloco[b1][num] -= 1
+			candidatos_celula[l][c1].remove(num)			
+		c1 += 1
+
+	l1 = 1
+	while l1 <= 9:
+		if sudoku[l1][c] == 0 and num in candidatos_celula[l1][c]:
+			b1 = int((l1-1)/3) * 3 + int((c-1)/3) + 1
+			freq_candidato_bloco[b1][num] -= 1
+			candidatos_celula[l1][c].remove(num)			
+		l1 += 1
+
+	b1 = 1 
+	while b1 <= 9:
+		if freq_candidato_bloco[b1][num] == 1:
+			l1 = int((b1-1)/3) * 3  + 1
+			l1_end = l1 + 2
+			while l1 <= l1_end:
+				c1 = ((b1-1)%3) * 3 + 1
+				c1_end = c1 + 2
+				while c1 <= c1_end:
+					if sudoku[l1][c1] == 0 and num in candidatos_celula[l1][c1]:
+						fill_sudoku_cell(b1,l1,c1,num)
+						
+						c1 = c1_end
+						l1 = l1_end							
+					c1 += 1
+				l1 += 1
+		b1 += 1
+	'''
+	l1 = 7
+	l1_end = 9
+	while l1 <= l1_end:
+		c1 = 1
+		c1_end = 3
+		while c1 <= c1_end:
+			print(candidatos_celula[l1][c1])
+			c1 += 1
+		l1 += 1
+	print(freq_candidato_bloco[5][2])'''
+
+	if preenchidos_linha[l] == 8 or preenchidos_coluna[c] == 8 or preenchidos_bloco[b] == 8:
+		check_8filled_group_autofill_9(b,l,c)
+
+	if len(nao_preenchidos_bloco[b]) >= 2:
+		verificar_candidatos_eliminar(b)
+
 def check_8filled_group_autofill_9(b,l,c):
+	print('chamada check_8filled_group_autofill_9(',b,',',l,',',c,')')
 	global sudoku
 	global pendentes
 	global passos
@@ -182,7 +329,10 @@ while l <= 9:
 	c = 1
 	while c <= 9:
 		b = int((l-1)/3) * 3 + int((c-1)/3) + 1
-		lista.append(nao_preenchidos_bloco[b].copy())
+		if sudoku[l][c] == 0:
+			lista.append(nao_preenchidos_bloco[b].copy())
+		else:
+			lista.append([])
 		c += 1
 	candidatos_celula.append(lista)
 	l += 1	
@@ -215,13 +365,11 @@ while pendentes > 0:
 						else:
 							n += 1
 			  
-			#if there's a moment that there's only one candidate for one cell, that's the digit to fill that cell
+						#if there's a moment that there's only one candidate for one cell, that's the digit to fill that cell
 						if len_list == 1:
 							num = candidatos_celula[l][c][0]
 							fill_sudoku_cell(b,l,c,num)
 							#c,l = {9,0} in my tests resetting lines and columns each time we filled a cell, makes the number of steps to solve pretty higher (almost 3x times than iterating all sudoku cells at a time)
-
-							check_8filled_group_autofill_9(b,l,c)
 							
 							break							
 									
@@ -241,9 +389,31 @@ while pendentes > 0:
 					while c <= c_end:
 						if sudoku[l][c] == 0 and num in candidatos_celula[l][c]:
 							fill_sudoku_cell(b,l,c,num)
-							
-							check_8filled_group_autofill_9(b,l,c)
-							
+			 							
+							n = n_end
+							c = c_end
+							l = l_end							
+						c += 1
+					l += 1
+			n += 1
+		verificar_candidatos_eliminar(b)
+		b += 1
+	b = 1 
+	while b <= 9:
+		n = 0
+		n_end = len(nao_preenchidos_bloco[b])
+		while n < n_end:
+			num = nao_preenchidos_bloco[b][n]
+			if freq_candidato_bloco[b][num] == 1:
+				l = int((b-1)/3) * 3  + 1
+				l_end = l + 2
+				while l <= l_end:
+					c = ((b-1)%3) * 3 + 1
+					c_end = c + 2
+					while c <= c_end:
+						if sudoku[l][c] == 0 and num in candidatos_celula[l][c]:
+							fill_sudoku_cell(b,l,c,num)
+			 							
 							n = n_end
 							c = c_end
 							l = l_end							
